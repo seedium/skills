@@ -1,5 +1,5 @@
 ---
-name: Create Commit
+name: create-commit
 description: This skill should be used when the user asks to "commit", "create a commit", "git commit", "commit my changes", "commit staged changes", "make a conventional commit", "write a commit message", or wants to create a well-formatted conventional commit from staged git changes. Handles branch safety checks, automatic commit type detection, message composition following the conventional commits spec, pre-commit hook failure recovery, and optional PR creation.
 disable-model-invocation: true
 allowed-tools: Bash(git *), Bash(gh *)
