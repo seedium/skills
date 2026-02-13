@@ -80,7 +80,7 @@ Create a conventional commit from staged changes with branch safety, automatic t
      - Describe what actually changed, not the meta-task you are working on
    - **Body** (when needed): Explain *what* changed and *why*, note breaking changes or migration steps. Use the body to clarify motivation when the subject alone is insufficient. If commitlint enforces `body-max-line-length`, wrap body lines accordingly.
    - **Blank lines**: Always add a blank line between header and body, and between body and footer (commitlint `body-leading-blank` and `footer-leading-blank` rules enforce this by default).
-   - **Exclude from body**: Co-author tags, AI metadata, tool attribution, or process-related notes
+   - **No metadata trailers**: Do not append `Co-Authored-By`, AI attribution, or any trailers not explicitly requested by the user. The commit message contains only the header and optional body.
 
    ### Subject quality rules
 
