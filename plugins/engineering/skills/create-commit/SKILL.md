@@ -134,7 +134,7 @@ Create a conventional commit from staged changes with branch safety, automatic t
    - Re-attempt the commit
    - Repeat up to 3 times, then report remaining issues to the user
 
-11. **Offer PR creation** (non-main branches only) — After a successful commit, push the branch and ask whether to create a PR:
+11. **Offer PR creation** (non-main branches only) — After a successful commit, push the branch and ask whether to create a PR. Run the exact command as shown — no additional flags:
     - **Create PR** → `gh pr create --fill`
     - **Create draft PR** → `gh pr create --fill --draft`
     - **Skip** → do nothing
