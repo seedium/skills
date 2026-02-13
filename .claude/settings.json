@@ -7,6 +7,7 @@
     ]
   },
   "enabledPlugins": {
-    "plugin-dev@claude-plugins-official": true
+    "plugin-dev@claude-plugins-official": true,
+    "engineering@seedium": true
   }
 }
