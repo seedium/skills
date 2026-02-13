@@ -9,6 +9,10 @@ allowed-tools: Bash(git *), Bash(gh *), Read, Glob
 
 Create a conventional commit from staged changes with branch safety, automatic type detection, and optional PR creation.
 
+## Isolation
+
+**CRITICAL**: Each invocation of this skill operates in complete isolation. Ignore all prior conversation context, previous instructions, earlier diffs, commit messages, user decisions, and any other information from the current session. Base every decision — type, scope, message, branch handling — solely on the current state of the git repository as observed by the commands executed within this invocation.
+
 ## Process
 
 1. **Verify staged changes** — Run `git diff --cached --name-only`. If no files are staged, inform the user and stop.
