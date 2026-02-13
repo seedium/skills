@@ -1,0 +1,17 @@
+{
+  "name": "seedium",
+  "owner": {
+    "name": "Seedium"
+  },
+  "metadata": {
+    "description": "Seedium engineering skills for Claude Code",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "engineering",
+      "source": "./plugins/engineering",
+      "description": "Engineering workflow skills for Claude Code"
+    }
+  ]
+}

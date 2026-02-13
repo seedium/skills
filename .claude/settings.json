@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:claude.com)",
+      "Bash(make validate:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "plugin-dev@claude-plugins-official": true
+  }
+}

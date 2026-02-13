@@ -1,0 +1,9 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Output artifacts
+*.zip
+*.tar.gz
+
+**/node_modules/**

@@ -1,0 +1,4 @@
+# Hide lockfile diffs
+package-lock.json -diff
+pnpm-lock.yaml -diff
+yarn.lock -diff
