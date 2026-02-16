@@ -115,9 +115,7 @@ Create a conventional commit from staged changes with branch safety, automatic t
    - Good sequence: `chore: add extract env plugin` → `chore: remove default env plugin` → `chore: enable cache layer for webpack`
    - Never use words like "trying", "another try", "final fix" — each commit must stand on its own
 
-8. **Present the message** to the user for approval before committing.
-
-9. **Commit** — Execute `git commit` with the approved message using a heredoc:
+8. **Commit** — Execute `git commit` with the composed message using a heredoc:
    ```bash
    git commit -m "$(cat <<'EOF'
    type(scope): subject
@@ -126,15 +124,16 @@ Create a conventional commit from staged changes with branch safety, automatic t
    EOF
    )"
    ```
+   If the user rejects the tool call with feedback, incorporate their feedback into a revised message and execute `git commit` again. Repeat until the user approves.
 
-10. **Handle pre-commit failures** — If the commit fails due to linting or formatting hooks:
+9. **Handle pre-commit failures** — If the commit fails due to linting or formatting hooks:
    - Analyze the error output
    - Apply targeted fixes to the reported issues
    - Stage fixes with `git add` (specific files only, not `git add .`)
    - Re-attempt the commit
    - Repeat up to 3 times, then report remaining issues to the user
 
-11. **Offer PR creation** (non-main branches only) — After a successful commit, push the branch and ask whether to create a PR. Run the exact command as shown — no additional flags:
+10. **Offer PR creation** (non-main branches only) — After a successful commit, push the branch and ask whether to create a PR. Run the exact command as shown — no additional flags:
     - **Create PR** → `gh pr create --fill`
     - **Create draft PR** → `gh pr create --fill --draft`
     - **Skip** → do nothing
