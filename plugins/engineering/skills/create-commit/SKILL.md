@@ -53,7 +53,7 @@ Create a conventional commit from staged changes with branch safety, automatic t
 5. **Determine commit type** — If commitlint config defines `type-enum`, only use types from that list. Otherwise, use the default table:
 
    | Type       | When to use                                           |
-   |------------|-------------------------------------------------------|
+   | ---------- | ----------------------------------------------------- |
    | `feat`     | New functionality, new public interfaces              |
    | `fix`      | Bug fixes, corrections preserving existing interfaces |
    | `refactor` | Code restructuring without behavior change            |
@@ -68,17 +68,16 @@ Create a conventional commit from staged changes with branch safety, automatic t
 6. **Determine scope** — If commitlint config defines `scope-enum`, only use scopes from that list. Otherwise, use a scope when all changes fall within a single logical module, component, or directory. Omit scope when changes span multiple areas or touch root-level config.
 
 7. **Compose the commit message** following the [Conventional Commits](https://www.conventionalcommits.org) specification and all loaded commitlint rules:
-
    - **Format**: `type(scope): subject` or `type: subject`
    - **Subject rules**:
      - Must contain a **verb and a subject** — the verb describes the action, the subject addresses the area
      - Use present simple, imperative mood (`add` not `adds`/`added`)
-     - Start lowercase (unless commitlint `subject-case` requires otherwise)
+     - **All letters must be lowercase** — no uppercase letters anywhere in the subject (unless commitlint `subject-case` requires otherwise)
      - Stay under 72 characters (or the `header-max-length` from commitlint config — note this limit applies to the **entire header** including type, scope, and colon)
      - Be specific and meaningful — the reader must understand what changed without looking at the diff
      - Keep it short — if motivation or context is needed, put it in the body
      - Describe what actually changed, not the meta-task you are working on
-   - **Body** (when needed): Explain *what* changed and *why*, note breaking changes or migration steps. Use the body to clarify motivation when the subject alone is insufficient. If commitlint enforces `body-max-line-length`, wrap body lines accordingly.
+   - **Body** (when needed): Explain _what_ changed and _why_, note breaking changes or migration steps. Use the body to clarify motivation when the subject alone is insufficient. If commitlint enforces `body-max-line-length`, wrap body lines accordingly.
    - **Blank lines**: Always add a blank line between header and body, and between body and footer (commitlint `body-leading-blank` and `footer-leading-blank` rules enforce this by default).
    - **No metadata trailers**: Do not append `Co-Authored-By`, AI attribution, or any trailers not explicitly requested by the user. The commit message contains only the header and optional body.
 
@@ -103,6 +102,7 @@ Create a conventional commit from staged changes with branch safety, automatic t
    **Keep short — use body for context:**
    - Bad: `feat: add another get user endpoint because first endpoint doesn't return security information for admin`
    - Good:
+
      ```
      feat: add admin get user endpoint
 
@@ -115,15 +115,16 @@ Create a conventional commit from staged changes with branch safety, automatic t
    - Good sequence: `chore: add extract env plugin` → `chore: remove default env plugin` → `chore: enable cache layer for webpack`
    - Never use words like "trying", "another try", "final fix" — each commit must stand on its own
 
-8. **Commit** — Execute `git commit` with the composed message using a heredoc:
-   ```bash
-   git commit -m "$(cat <<'EOF'
-   type(scope): subject
+8. **Commit** — Execute `git commit` immediately with the composed message. Do **not** present the message for approval first — commit directly:
 
-   Optional body explaining what and why.
-   EOF
-   )"
+   ```bash
+   git commit -m "type(scope): subject
+
+   Optional body explaining what and why."
    ```
+
+   The message string must contain **no indentation, leading spaces, or extra formatting** — only the raw text with newlines between header, blank line, and body lines.
+
    If the user rejects the tool call with feedback, incorporate their feedback into a revised message and execute `git commit` again. Repeat until the user approves.
 
 9. **Handle pre-commit failures** — If the commit fails due to linting or formatting hooks:
@@ -133,10 +134,11 @@ Create a conventional commit from staged changes with branch safety, automatic t
    - Re-attempt the commit
    - Repeat up to 3 times, then report remaining issues to the user
 
-10. **Offer PR creation** (non-main branches only) — After a successful commit, push the branch and ask whether to create a PR. Run the exact command as shown — no additional flags:
-    - **Create PR** → `gh pr create --fill`
-    - **Create draft PR** → `gh pr create --fill --draft`
-    - **Skip** → do nothing
+10. **Create PR** (non-main branches only) — After a successful commit, push the branch and create a pull request. Use **only** one of these two commands based on the user's intention (draft vs. ready). Run the exact command as shown — no additional flags, no `--title`, no `--body`:
+    - **Ready PR** → `gh pr create --fill`
+    - **Draft PR** → `gh pr create --fill --draft`
+
+    If the user did not specify draft or ready, ask which one they prefer.
 
 ## Commit Message Examples
 
