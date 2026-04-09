@@ -2,156 +2,89 @@
 name: create-commit
 description: This skill should be used when the user asks to "commit", "create a commit", "git commit", "commit my changes", "commit staged changes", "make a conventional commit", "write a commit message", or wants to create a well-formatted conventional commit from staged git changes. Handles branch safety checks, automatic commit type detection, message composition following the conventional commits spec, pre-commit hook failure recovery, and optional PR creation.
 disable-model-invocation: true
-allowed-tools: Bash(git *), Bash(gh *), Read, Glob
+model: haiku
+allowed-tools: Bash(git *), Bash(gh *), Read
 ---
 
 # Create Commit
 
-Create a conventional commit from staged changes with branch safety, automatic type detection, and optional PR creation.
+Create a conventional commit from staged changes.
 
 ## Isolation
 
-**CRITICAL**: Each invocation of this skill operates in complete isolation. Ignore all prior conversation context, previous instructions, earlier diffs, commit messages, user decisions, and any other information from the current session. Base every decision — type, scope, message, branch handling — solely on the current state of the git repository as observed by the commands executed within this invocation.
+Each invocation operates in complete isolation. Ignore all prior conversation context. Base every decision solely on the current git repository state observed by commands in this invocation.
 
 ## Process
 
-1. **Verify staged changes** — Run `git diff --cached --name-only`. If no files are staged, inform the user and stop.
+1. **Gather all context** — Run one command to collect everything:
 
-2. **Load commitlint config** — Search the repository root for a commitlint configuration file. Use Glob to check for these files (in priority order):
-
-   ```
-   commitlint.config.{js,cjs,mjs,ts,cts,mts}
-   .commitlintrc
-   .commitlintrc.{json,yaml,yml,js,cjs,mjs,ts,cts,mts}
+   ```bash
+   echo '=== STAGED ===' && git diff --cached --name-only && echo '=== DIFF ===' && git diff --cached && echo '=== BRANCH ===' && git branch --show-current && echo '=== LOG ===' && git log --oneline -5
    ```
 
-   Also check `package.json` for a `commitlint` field.
+   If the STAGED section is empty, tell the user nothing is staged and stop.
 
-   If a config is found, read it and extract all applicable rules:
-   - `type-enum` — allowed commit types (overrides the default type table)
-   - `scope-enum` — allowed scopes (restricts scope choices)
-   - `header-max-length` — max header length (overrides the 72-char default)
-   - `subject-case` — required casing for the subject
-   - `body-max-line-length` — max line length in the body
-   - `body-leading-blank` — whether a blank line is required before the body
-   - `footer-leading-blank` — whether a blank line is required before the footer
-   - Any other rules defined in the config
+2. **Branch guard** — If on `main` or `master`, ask whether to create a new branch (`<kebab-description>`, max 50 chars) or commit directly.
 
-   If the config uses `extends` (e.g., `@commitlint/config-conventional`), acknowledge the base ruleset and apply any rule overrides on top.
+3. **Compose commit message** per [Conventional Commits](https://www.conventionalcommits.org):
 
-   If **no config is found**, apply the default constraints defined in the steps below.
+   **Format**: `type(scope): subject` or `type: subject`
 
-3. **Gather context** (run in parallel):
-   - `git diff --cached` — full diff of staged changes
-   - `git branch --show-current` — current branch name
-   - `git log --oneline -5` — recent commits for style consistency
+   **Types**:
 
-4. **Branch guard** — If on `main` or `master`, ask whether to:
-   - Create a new branch (derive name as `<kebab-description>`, max 50 chars), then run `git checkout -b <name>`
-   - Continue committing directly to the protected branch
+   | Type       | When                                       |
+   | ---------- | ------------------------------------------ |
+   | `feat`     | New functionality                          |
+   | `fix`      | Bug fixes                                  |
+   | `refactor` | Restructuring without behavior change      |
+   | `chore`    | Tooling, config, dependencies              |
+   | `docs`     | Documentation only                         |
+   | `style`    | Formatting, whitespace only                |
+   | `test`     | Adding or updating tests                   |
+   | `ci`       | CI/CD changes                              |
+   | `perf`     | Performance improvements                   |
+   | `revert`   | Reverting a previous commit                |
 
-5. **Determine commit type** — If commitlint config defines `type-enum`, only use types from that list. Otherwise, use the default table:
+   **Scope**: use when changes fall within a single module/component; omit when spanning multiple areas.
 
-   | Type       | When to use                                           |
-   | ---------- | ----------------------------------------------------- |
-   | `feat`     | New functionality, new public interfaces              |
-   | `fix`      | Bug fixes, corrections preserving existing interfaces |
-   | `refactor` | Code restructuring without behavior change            |
-   | `chore`    | Tooling, config, dependencies, non-functional changes |
-   | `docs`     | Documentation-only changes                            |
-   | `style`    | Formatting, whitespace, no logic change               |
-   | `test`     | Adding or updating tests                              |
-   | `ci`       | CI/CD pipeline changes                                |
-   | `perf`     | Performance improvements                              |
-   | `revert`   | Reverting a previous commit                           |
+   **Subject rules**:
+   - Must contain verb + subject — `add auth middleware`, not just `auth middleware`
+   - Imperative mood, present tense — `add` not `adds`/`added`
+   - All lowercase, under 72 characters for the entire header
+   - Specific and meaningful — reader understands the change without the diff
+   - Describe actual changes, never meta-tasks — no "trying", "another try", "final fix"
 
-6. **Determine scope** — If commitlint config defines `scope-enum`, only use scopes from that list. Otherwise, use a scope when all changes fall within a single logical module, component, or directory. Omit scope when changes span multiple areas or touch root-level config.
+   **Body** (optional): explain what and why. Separate from header with a blank line.
 
-7. **Compose the commit message** following the [Conventional Commits](https://www.conventionalcommits.org) specification and all loaded commitlint rules:
-   - **Format**: `type(scope): subject` or `type: subject`
-   - **Subject rules**:
-     - Must contain a **verb and a subject** — the verb describes the action, the subject addresses the area
-     - Use present simple, imperative mood (`add` not `adds`/`added`)
-     - **All letters must be lowercase** — no uppercase letters anywhere in the subject (unless commitlint `subject-case` requires otherwise)
-     - Stay under 72 characters (or the `header-max-length` from commitlint config — note this limit applies to the **entire header** including type, scope, and colon)
-     - Be specific and meaningful — the reader must understand what changed without looking at the diff
-     - Keep it short — if motivation or context is needed, put it in the body
-     - Describe what actually changed, not the meta-task you are working on
-   - **Body** (when needed): Explain _what_ changed and _why_, note breaking changes or migration steps. Use the body to clarify motivation when the subject alone is insufficient. If commitlint enforces `body-max-line-length`, wrap body lines accordingly.
-   - **Blank lines**: Always add a blank line between header and body, and between body and footer (commitlint `body-leading-blank` and `footer-leading-blank` rules enforce this by default).
-   - **No metadata trailers**: Do not append `Co-Authored-By`, AI attribution, or any trailers not explicitly requested by the user. The commit message contains only the header and optional body.
+   **No trailers**: no `Co-Authored-By` or AI attribution unless explicitly requested.
 
-   ### Subject quality rules
+   **Good examples**:
+   ```
+   feat(auth): add jwt token validation
+   fix(parser): handle empty input gracefully
+   refactor: consolidate duplicate helper functions
+   ```
 
-   **Must have verb + subject (action + area):**
-   - Bad: `feat: bearer login functionality` (no verb)
-   - Bad: `feat: add` (no subject)
-   - Good: `feat: add bearer login functionality`
+   **Bad examples**: `feat: bearer login` (no verb), `chore: fix build` (vague), `chore: final try` (meta-task)
 
-   **Must be meaningful — reader should understand the change:**
-   - Bad: `style: change bunch files` (unclear what changed)
-   - Good: `style: format src folder with prettier`
-   - Bad: `chore: fix build` (unclear how)
-   - Good: `chore: add env var extract plugin`
-
-   **Must address a specific area, not be generic:**
-   - Bad: `fix: fix bug` (says nothing)
-   - Bad: `fix: fix schema` (still vague)
-   - Good: `fix: change first name type in user schema`
-
-   **Keep short — use body for context:**
-   - Bad: `feat: add another get user endpoint because first endpoint doesn't return security information for admin`
-   - Good:
-
-     ```
-     feat: add admin get user endpoint
-
-     The existing endpoint works for simple user, but now admins
-     want to get additional information about the user.
-     ```
-
-   **Describe actual changes — never the meta-task:**
-   - Bad sequence: `chore: final try` → `chore: trying to enable` → `chore: fix` → `chore: fix build`
-   - Good sequence: `chore: add extract env plugin` → `chore: remove default env plugin` → `chore: enable cache layer for webpack`
-   - Never use words like "trying", "another try", "final fix" — each commit must stand on its own
-
-8. **Commit** — Execute `git commit` immediately with the composed message. Do **not** present the message for approval first — commit directly:
+4. **Commit** — Run `git commit` immediately, do not ask for approval:
 
    ```bash
    git commit -m "type(scope): subject
 
-   Optional body explaining what and why."
+   Optional body."
    ```
 
-   The message string must contain **no indentation, leading spaces, or extra formatting** — only the raw text with newlines between header, blank line, and body lines.
+   No indentation or extra formatting in the message. If the user rejects the tool call with feedback, revise and retry.
 
-   If the user rejects the tool call with feedback, incorporate their feedback into a revised message and execute `git commit` again. Repeat until the user approves.
+5. **Pre-commit failures** — If commit fails due to hooks:
+   - Read error output, apply targeted fixes
+   - If the error mentions commitlint rules (type-enum, scope-enum, etc.), run `ls commitlint.config.* .commitlintrc* 2>/dev/null` at the repo root to find the config, then Read it and adjust the message accordingly
+   - Stage fixes with `git add <specific-files>` (never `git add .`)
+   - Retry up to 3 times, then report remaining issues
 
-9. **Handle pre-commit failures** — If the commit fails due to linting or formatting hooks:
-   - Analyze the error output
-   - Apply targeted fixes to the reported issues
-   - Stage fixes with `git add` (specific files only, not `git add .`)
-   - Re-attempt the commit
-   - Repeat up to 3 times, then report remaining issues to the user
+6. **Create PR** (non-main branches only) — After successful commit, push and create a PR. Use only these exact commands:
+   - **Ready**: `gh pr create --fill`
+   - **Draft**: `gh pr create --fill --draft`
 
-10. **Create PR** (non-main branches only) — After a successful commit, push the branch and create a pull request. Use **only** one of these two commands based on the user's intention (draft vs. ready). Run the exact command as shown — no additional flags, no `--title`, no `--body`:
-    - **Ready PR** → `gh pr create --fill`
-    - **Draft PR** → `gh pr create --fill --draft`
-
-    If the user did not specify draft or ready, ask which one they prefer.
-
-## Commit Message Examples
-
-```
-feat(auth): add jwt token validation
-fix(parser): handle empty input gracefully
-refactor: consolidate duplicate helper functions
-chore: update terraform provider versions
-docs(api): add rate limiting section
-test(billing): add edge case coverage for zero amounts
-ci: add staging deployment workflow
-perf(db): add index on users.email column
-feat!: redesign authentication flow
-
-BREAKING CHANGE: OAuth tokens from v1 are no longer valid.
-```
+   If not specified, ask which one.
