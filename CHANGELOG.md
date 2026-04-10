@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/seedium/skills/compare/v1.1.0...v1.1.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **create-commit:** restore commit type rules and subject quality examples ([7712627](https://github.com/seedium/skills/commit/7712627527eaef17bbcabc81cf8d7bae6767cea2))
+
 ## [1.1.0](https://github.com/seedium/skills/compare/v1.0.2...v1.1.0) (2026-04-09)
 
 
