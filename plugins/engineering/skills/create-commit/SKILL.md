@@ -32,18 +32,20 @@ Each invocation operates in complete isolation. Ignore all prior conversation co
 
    **Types**:
 
-   | Type       | When                                       |
-   | ---------- | ------------------------------------------ |
-   | `feat`     | New functionality                          |
-   | `fix`      | Bug fixes                                  |
-   | `refactor` | Restructuring without behavior change      |
-   | `chore`    | Tooling, config, dependencies              |
-   | `docs`     | Documentation only                         |
-   | `style`    | Formatting, whitespace only                |
-   | `test`     | Adding or updating tests                   |
-   | `ci`       | CI/CD changes                              |
-   | `perf`     | Performance improvements                   |
-   | `revert`   | Reverting a previous commit                |
+   | Type       | When to use                                                                                  |
+   | ---------- | -------------------------------------------------------------------------------------------- |
+   | `feat`     | New functionality in source code that affects client/user-facing behavior                     |
+   | `fix`      | Bug fixes in source code that correct client/user-facing behavior                             |
+   | `refactor` | Code restructuring without behavior change                                                   |
+   | `chore`    | Tooling, config, dependencies, non-functional changes                                        |
+   | `docs`     | Documentation-only changes                                                                   |
+   | `style`    | Formatting, whitespace, no logic change                                                      |
+   | `test`     | Adding or updating tests                                                                     |
+   | `ci`       | CI/CD pipeline changes                                                                       |
+   | `perf`     | Performance improvements                                                                     |
+   | `revert`   | Reverting a previous commit                                                                  |
+
+   **Key rule**: `feat` and `fix` are reserved for source code changes (`src/`, `lib/`, application code) that directly affect client/user functionality. Config changes, build fixes, dependency updates, and tooling adjustments are `chore` even if they "fix" something — unless the fix corrects a bug experienced by end users.
 
    **Scope**: use when changes fall within a single module/component; omit when spanning multiple areas.
 
@@ -63,9 +65,27 @@ Each invocation operates in complete isolation. Ignore all prior conversation co
    feat(auth): add jwt token validation
    fix(parser): handle empty input gracefully
    refactor: consolidate duplicate helper functions
+   chore: update terraform provider versions
    ```
 
    **Bad examples**: `feat: bearer login` (no verb), `chore: fix build` (vague), `chore: final try` (meta-task)
+
+   ### Subject quality rules
+
+   **Must have verb + subject (action + area):**
+   - Bad: `feat: bearer login functionality` (no verb)
+   - Good: `feat: add bearer login functionality`
+
+   **Must be meaningful — reader should understand the change:**
+   - Bad: `chore: fix build` (unclear how)
+   - Good: `chore: add env var extract plugin`
+
+   **Must address a specific area, not be generic:**
+   - Bad: `fix: fix bug` (says nothing)
+   - Good: `fix: change first name type in user schema`
+
+   **Describe actual changes — never the meta-task:**
+   - Never use words like "trying", "another try", "final fix" — each commit must stand on its own
 
 4. **Commit** — Run `git commit` immediately, do not ask for approval:
 
